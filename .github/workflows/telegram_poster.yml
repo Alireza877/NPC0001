@@ -10,6 +10,8 @@ on:
 jobs:
   send_message:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write # Grant permission to commit and push changes
 
     steps:
     - name: Check out repository code
@@ -32,3 +34,15 @@ jobs:
         TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
       run: python send_telegram_message.py
 
+    - name: Commit and Push Changes
+      run: |
+        git config user.name "GitHub Actions Bot"
+        git config user.email "github-actions@github.com"
+        git add messages.txt
+        # Check if there are changes to commit
+        if git diff --staged --quiet; then
+          echo "No changes to commit, file was likely empty or script failed."
+        else
+          git commit -m "chore(bot): Update messages.txt after sending message"
+          git push
+        fi
