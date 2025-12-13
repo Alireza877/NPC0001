@@ -58,7 +58,7 @@ def main():
         sys.exit(0)
 
     # Get the first line and prepare the rest
-    message_to_send = lines[0].strip()
+    message_to_send = lines[0].strip() + "\n\n@ravanenabod"
     remaining_lines = lines[1:]
 
     # If the line is empty after stripping, remove it and exit
