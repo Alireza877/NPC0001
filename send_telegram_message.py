@@ -1,4 +1,3 @@
-
 import os
 import requests
 import sys
@@ -19,10 +18,14 @@ def send_message(chat_id, text):
     }
     try:
         response = requests.post(url, json=payload, timeout=10)
-        response.raise_for_status()
-        return response.json()
+        print(f"Response status: {response.status_code}")
+        print(f"Response text: {response.text}")  # Log the full response for debugging
+        if response.status_code == 200:
+            return response.json()
+        else:
+            return {'ok': False, 'error_code': response.status_code, 'description': response.text}
     except requests.exceptions.RequestException as e:
-        # Return a dictionary with the error to be handled by the main logic
+        print(f"Request exception: {str(e)}")
         return {'ok': False, 'error_code': 'RequestException', 'description': str(e)}
 
 def main():
@@ -62,11 +65,18 @@ def main():
     remaining_lines = lines[1:]
 
     # If the line is empty after stripping, remove it and exit
-    if not message_to_send:
+    if not message_to_send.strip():  # Improved check for empty after strip
         print("Info: First line is empty, removing it.")
         with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
             f.writelines(remaining_lines)
         sys.exit(0)
+
+    # Check message length
+    if len(message_to_send) > 4096:
+        error_text = f"پیام خیلی طولانی: {len(message_to_send)} کاراکتر. تلگرام حداکثر 4096 اجازه می‌دهد."
+        send_message(ADMIN_ID, error_text)
+        print(f"Error: Message too long ({len(message_to_send)} chars).", file=sys.stderr)
+        sys.exit(1)
 
     # Attempt to send the message to the channel
     print(f"Attempting to send message to channel {CHANNEL_ID}...")
@@ -90,7 +100,6 @@ def main():
         # If sending failed, notify the admin and keep the message in the file
         print("Failed to send message to the channel.", file=sys.stderr)
         error_description = result.get('description', 'No description provided.')
-
         admin_error_message = (
             f"⚠️ *خطا در ارسال پیام به کانال تلگرام*\n\n"
             f"ربات نتوانست پیام را ارسال کند. این پیام در فایل باقی می‌ماند تا در نوبت بعدی مجدداً برای ارسال آن تلاش شود.\n\n"
